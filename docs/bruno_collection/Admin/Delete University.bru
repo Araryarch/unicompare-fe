@@ -1,0 +1,16 @@
+meta {
+  name: Delete University
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{base_url}}/admin/universities/test_uni
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+

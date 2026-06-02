@@ -1,0 +1,21 @@
+meta {
+  name: Update University
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{base_url}}/admin/universities/test_uni
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Updated Test University"
+  }
+}
