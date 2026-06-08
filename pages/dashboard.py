@@ -10,6 +10,7 @@ from services.universities import (
     delete_university,
     update_programs,
     create_program,
+    update_program,
     delete_program,
     list_users,
 )
@@ -75,6 +76,24 @@ def add_program_dialog(uni_id):
                     st.error(err)
 
 
+@st.dialog("Edit Program")
+def edit_program_dialog(uni_id, pid, current_name, current_degree, current_score):
+    with st.form(f"edit_prog_{uni_id}_{pid}"):
+        name = st.text_input("Program Name", value=current_name)
+        degree = st.text_input("Degree", value=current_degree)
+        score = st.number_input("Score", value=float(current_score), step=0.1)
+        if st.form_submit_button("Save", type="primary"):
+            if not name or not degree:
+                st.error("Name and Degree are required.")
+            else:
+                success, err = update_program(token, uni_id, pid, name, score, degree)
+                if success:
+                    st.success("Program updated!")
+                    st.rerun()
+                else:
+                    st.error(err)
+
+
 tab1, tab2 = st.tabs(["Universities & Programs", "Users List"])
 
 with tab1:
@@ -118,14 +137,16 @@ with tab1:
                         degree = prog.get("degree", "-")
                         cur_score = float(prog.get("score", 0))
 
-                        col_a, col_b, col_c = st.columns([3, 1, 1], vertical_alignment="center")
+                        col_a, col_b, col_c, col_d = st.columns([3, 1, 1, 1], vertical_alignment="center")
                         col_a.markdown(f"{name}  _{degree}_")
                         new_score = col_b.number_input(
                             "Score", value=cur_score, step=0.1,
                             key=f"score_{uid}_{pid}", label_visibility="collapsed",
                         )
                         updated.append({"id": pid, "score": new_score, "score_text": str(new_score)})
-                        if col_c.button("Delete", key=f"del_prog_{uid}_{pid}"):
+                        if col_c.button("Edit", key=f"edit_prog_{uid}_{pid}"):
+                            edit_program_dialog(uid, pid, name, degree, cur_score)
+                        if col_d.button("Delete", key=f"del_prog_{uid}_{pid}"):
                             success, err = delete_program(token, uid, pid)
                             if success:
                                 st.success("Program deleted!")

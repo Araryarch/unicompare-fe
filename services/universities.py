@@ -66,6 +66,12 @@ def create_program(token: Optional[str], uni_id: str, name: str, score: float, d
     return res.status_code == 200, res.text if res.status_code != 200 else None
 
 
+def update_program(token: Optional[str], uni_id: str, pid, name: str, score: float, degree: str):
+    res = api_put(f"/admin/universities/{uni_id}/programs/{pid}", token=token,
+                  json={"name": name, "score": score, "score_text": str(score), "degree": degree})
+    return res.status_code == 200, res.text if res.status_code != 200 else None
+
+
 def delete_program(token: Optional[str], uni_id: str, pid):
     res = api_delete(f"/admin/universities/{uni_id}/programs/{pid}", token=token)
     return res.status_code == 200, res.text if res.status_code != 200 else None
