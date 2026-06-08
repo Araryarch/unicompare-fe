@@ -8,7 +8,6 @@ from services.universities import (
     create_university,
     update_university,
     delete_university,
-    update_programs,
     create_program,
     update_program,
     delete_program,
@@ -130,23 +129,25 @@ with tab1:
                 if not programs:
                     st.info("No programs.")
                 else:
-                    updated = []
                     for prog in programs:
                         pid = prog.get("id") or prog.get("_id")
                         name = prog.get("name", "-")
-                        degree = prog.get("degree", "-")
+                        cur_degree = prog.get("degree", "-")
                         cur_score = float(prog.get("score", 0))
 
-                        col_a, col_b, col_c, col_d = st.columns([3, 1, 1, 1], vertical_alignment="center")
-                        col_a.markdown(f"{name}  _{degree}_")
-                        new_score = col_b.number_input(
+                        col_a, col_b, col_c, col_d, col_e = st.columns([2, 1.5, 1, 1, 1], vertical_alignment="center")
+                        col_a.markdown(f"**{name}**")
+                        col_b.text_input(
+                            "Degree", value=cur_degree,
+                            key=f"deg_{uid}_{pid}", label_visibility="collapsed",
+                        )
+                        col_c.number_input(
                             "Score", value=cur_score, step=0.1,
                             key=f"score_{uid}_{pid}", label_visibility="collapsed",
                         )
-                        updated.append({"id": pid, "score": new_score, "score_text": str(new_score)})
-                        if col_c.button("Edit", key=f"edit_prog_{uid}_{pid}"):
-                            edit_program_dialog(uid, pid, name, degree, cur_score)
-                        if col_d.button("Delete", key=f"del_prog_{uid}_{pid}"):
+                        if col_d.button("Edit", key=f"edit_prog_{uid}_{pid}"):
+                            edit_program_dialog(uid, pid, name, cur_degree, cur_score)
+                        if col_e.button("Delete", key=f"del_prog_{uid}_{pid}"):
                             success, err = delete_program(token, uid, pid)
                             if success:
                                 st.success("Program deleted!")
@@ -154,13 +155,20 @@ with tab1:
                             else:
                                 st.error(err)
 
-                    if st.button("Save Scores", key=f"save_{uid}", type="primary", width="stretch"):
-                        success, err = update_programs(token, uid, updated)
-                        if success:
-                            st.success("Scores saved!")
+                    if st.button("Save All Changes", key=f"save_{uid}", type="primary", width="stretch"):
+                        ok = True
+                        for prog in programs:
+                            pid = prog.get("id") or prog.get("_id")
+                            p_name = prog.get("name", "-")
+                            p_deg = st.session_state.get(f"deg_{uid}_{pid}", prog.get("degree", "-"))
+                            p_score = st.session_state.get(f"score_{uid}_{pid}", float(prog.get("score", 0)))
+                            s, err = update_program(token, uid, pid, p_name, float(p_score), p_deg)
+                            if not s:
+                                st.error(f"Failed to update {p_name}: {err}")
+                                ok = False
+                        if ok:
+                            st.success("All changes saved!")
                             st.rerun()
-                        else:
-                            st.error(err)
 
 with tab2:
     if st.button("Refresh Users"):
