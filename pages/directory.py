@@ -29,7 +29,7 @@ with tab2:
         if unis is None:
             st.error("Failed to compare scores.")
         else:
-            st.success(f"Found eligible programs across {len(unis)} universities!")
+            st.toast(f"Found eligible programs across {len(unis)} universities! 🎯")
             render_eligible_programs(unis)
 
 with tab3:

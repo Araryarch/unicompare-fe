@@ -5,7 +5,7 @@ from services.auth import login, register, get_profile
 st.title("My Account")
 
 if st.session_state.get("token"):
-    st.success("You are logged in.")
+    st.toast("You are logged in. 🟢")
     user_data = get_profile(st.session_state.token)
     if user_data:
         st.write("### Profile Information")
@@ -29,7 +29,7 @@ else:
                 token = login(l_username, l_password)
                 if token:
                     st.session_state.token = token
-                    st.success("Login successful!")
+                    st.session_state.toast_msg = "Login successful! 🎉"
                     st.rerun()
                 else:
                     st.error("Invalid credentials.")
@@ -41,6 +41,6 @@ else:
             if st.form_submit_button("Register"):
                 success, err = register(r_username, r_password)
                 if success:
-                    st.success("Registration successful! Please login.")
+                    st.toast("Registration successful! Please login. 🎉")
                 else:
                     st.error(f"Registration failed: {err}")
