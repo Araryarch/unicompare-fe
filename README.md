@@ -7,6 +7,7 @@ Frontend Streamlit untuk membandingkan Perguruan Tinggi Negeri (PTN) di Indonesi
 - [Arsitektur](#arsitektur)
 - [Struktur Folder](#struktur-folder)
 - [Session & State Management](#session--state-management)
+  - [Cookies (Token Persistence)](#cookies-token-persistence)
 - [API Integration](#api-integration)
 - [Performance Optimization](#performance-optimization)
 - [Pages](#pages)
@@ -50,7 +51,7 @@ Pages → Components → Services → Utils
 unicompare-fe/
 ├── app.py                          # Entry point — multipage navigation
 ├── run.py                          # Helper untuk `streamlit run app.py`
-├── requirements.txt                # streamlit, requests
+├── requirements.txt                # streamlit, requests, streamlit-cookies-controller
 ├── .gitignore
 │
 ├── pages/
@@ -126,6 +127,81 @@ Programs di-cache per university ID. Jadi kalo user milih PTN A, balik ke PTN B,
 #### 4. Admin Refresh
 
 Ada `refresh_universities()` buat admin yang butuh data paling baru setelah mutasi data.
+
+---
+
+### Cookies (Token Persistence)
+
+**Library:** `streamlit-cookies-controller`
+
+Streamlit `st.session_state` cuma bertahan selama session browser (tab). Kalo user tutup tab atau refresh, session state ilang. Biar user tetep login, token disimpan di **browser cookies** pake `streamlit-cookies-controller`.
+
+#### Alur Cookie di `app.py:2-18`
+
+```python
+from streamlit_cookies_controller import CookieController
+
+if "cookie_controller" not in st.session_state:
+    st.session_state.cookie_controller = CookieController()
+
+controller = st.session_state.cookie_controller
+cookie_token = controller.get("token")
+
+if "token" not in st.session_state:
+    st.session_state.token = st.query_params.get("token") or cookie_token or None
+
+if st.session_state.token and st.session_state.token != cookie_token:
+    controller.set("token", st.session_state.token)
+elif st.session_state.token is None and cookie_token is not None:
+    controller.remove("token")
+```
+
+**Cara kerja:**
+
+```
+Login sukses
+    │
+    ├─► account.py: st.session_state.token = token
+    ├─► account.py: st.query_params["token"] = token
+    ├─► st.rerun()
+    │
+    └─► app.py (rerun):
+          ├─► Detect token baru di session_state
+          ├─► controller.set("token", token)  ← simpan ke cookie
+          └─► Cookie browser: token tersimpan
+
+Page refresh / buka tab baru
+    │
+    ├─► app.py: controller.get("token") → dapet dari cookie
+    ├─► st.session_state.token = cookie_token
+    └─► User tetep login
+
+Logout
+    │
+    ├─► account.py: st.session_state.token = None
+    ├─► account.py: st.query_params.clear()
+    ├─► st.rerun()
+    │
+    └─► app.py (rerun):
+          ├─► Detect token = None + cookie masih ada
+          ├─► controller.remove("token")  ← hapus cookie
+          └─► User bener-bener logout
+```
+
+**Kenapa pake `st.query_params` juga?** — Biar backend bisa redirect user dengan token di URL (contoh: setelah OAuth login). Cookies sebagai fallback kalo ga ada query param.
+
+**Perbandingan penyimpanan token:**
+
+| Metode | Scope | Bertahan refresh? | Bisa di-share lewat URL? |
+|---|---|---|---|
+| `st.session_state` | Session browser | ✗ | ✗ |
+| `st.query_params` | URL | ✗ | ✓ |
+| `Cookie` | Browser | ✓ | ✗ |
+
+Ketiganya dipake bareng biar:
+1. **Query params** — nerima token dari redirect backend
+2. **Session state** — akses cepat selama session
+3. **Cookie** — persist login antar session
 
 ### Flow Diagram Session State
 
@@ -221,6 +297,7 @@ Login → POST /auth/login → return access_token
     │
     ├─► st.session_state.token = token
     ├─► st.query_params["token"] = token
+    ├─► app.py detect token baru → controller.set("token", token)  ← cookie
     │
     └─► Setiap API call dibawah ini:
           api_get("/auth/me", token=st.session_state.token)
@@ -283,7 +360,25 @@ if not data:
 ### app.py — Entry Point
 
 ```python
+import streamlit as st
+from streamlit_cookies_controller import CookieController
+
 st.set_page_config(page_title="Unicompare")
+
+if "cookie_controller" not in st.session_state:
+    st.session_state.cookie_controller = CookieController()
+
+controller = st.session_state.cookie_controller
+cookie_token = controller.get("token")
+
+if "token" not in st.session_state:
+    st.session_state.token = st.query_params.get("token") or cookie_token or None
+
+if st.session_state.token and st.session_state.token != cookie_token:
+    controller.set("token", st.session_state.token)
+elif st.session_state.token is None and cookie_token is not None:
+    controller.remove("token")
+
 directory = st.Page("pages/directory.py", title="University Directory")
 account = st.Page("pages/account.py", title="My Account")
 dashboard = st.Page("pages/dashboard.py", title="Admin Dashboard")
@@ -292,7 +387,8 @@ pg.run()
 ```
 
 - Pake `st.Page` + `st.navigation` (multipage app)
-- Token diambil dari `st.query_params` biar bisa redirect login dari backend
+- Token diambil dari `st.query_params` (redirect login) → fallback ke cookie (persist session)
+- Cookie auto-sync: set pas login, remove pas logout
 
 ### pages/directory.py
 
