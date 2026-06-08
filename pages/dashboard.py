@@ -26,7 +26,12 @@ if not token:
     st.stop()
 
 user_data = get_profile(token)
-if not user_data or user_data.get("role") != "admin":
+if user_data == "UNAUTHORIZED":
+    st.error("Session expired. Please log in again.")
+    st.session_state.token = None
+    st.query_params.clear()
+    st.stop()
+elif not user_data or user_data.get("role") != "admin":
     st.error("Access Denied: You must be an administrator to view this page.")
     st.stop()
 

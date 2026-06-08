@@ -15,7 +15,12 @@ def register(username: str, password: str):
 
 
 def get_profile(token: Optional[str]):
-    res = api_get("/auth/me", token=token)
-    if res.status_code == 200:
-        return res.json()
-    return None
+    try:
+        res = api_get("/auth/me", token=token)
+        if res.status_code == 200:
+            return res.json()
+        elif res.status_code == 401:
+            return "UNAUTHORIZED"
+        return None
+    except Exception:
+        return None

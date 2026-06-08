@@ -7,14 +7,17 @@ st.title("My Account")
 if st.session_state.get("token"):
     st.toast("You are logged in")
     user_data = get_profile(st.session_state.token)
-    if user_data:
+    if user_data == "UNAUTHORIZED":
+        st.error("Session expired. Please log in again.")
+        st.session_state.token = None
+        st.query_params.clear()
+        st.rerun()
+    elif user_data:
         st.write("### Profile Information")
         st.write(f"**Username**: {user_data.get('username')}")
         st.write(f"**Role**: {user_data.get('role', 'User')}")
     else:
-        st.error("Session expired. Please log in again.")
-        st.session_state.token = None
-        st.query_params.clear()
+        st.error("Failed to load profile. Please try again.")
 
     if st.button("Logout"):
         st.session_state.token = None
