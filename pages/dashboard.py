@@ -14,6 +14,10 @@ from services.universities import (
     list_users,
 )
 
+if "toast_msg" in st.session_state:
+    st.toast(st.session_state.toast_msg)
+    del st.session_state.toast_msg
+
 st.title("Admin Dashboard")
 
 token = st.session_state.get("token")
@@ -37,7 +41,7 @@ def add_uni_dialog():
             sources_list = [s.strip() for s in c_sources.split(",")] if c_sources else []
             success, err = create_university(token, c_id, c_name, sources_list)
             if success:
-                st.toast("University added")
+                st.session_state.toast_msg = "University added"
                 st.rerun()
             else:
                 st.error(err)
@@ -51,7 +55,7 @@ def edit_uni_dialog(uni_id, current_name):
         if st.form_submit_button("Save"):
             success, err = update_university(token, uni_id, u_name)
             if success:
-                st.toast("Updated successfully")
+                st.session_state.toast_msg = "Updated successfully"
                 st.rerun()
             else:
                 st.error(err)
@@ -69,7 +73,7 @@ def add_program_dialog(uni_id):
             else:
                 success, err = create_program(token, uni_id, name, score, degree)
                 if success:
-                    st.toast("Program added")
+                    st.session_state.toast_msg = "Program added"
                     st.rerun()
                 else:
                     st.error(err)
@@ -87,7 +91,7 @@ def edit_program_dialog(uni_id, pid, current_name, current_degree, current_score
             else:
                 success, err = update_program(token, uni_id, pid, name, score, degree)
                 if success:
-                    st.toast("Program updated")
+                    st.session_state.toast_msg = "Program updated"
                     st.rerun()
                 else:
                     st.error(err)
@@ -115,7 +119,7 @@ with tab1:
                 if btn_col2.button("Delete", key=f"del_{uid}", type="primary", width="stretch"):
                     success, err = delete_university(token, uid)
                     if success:
-                        st.toast(f"Deleted {uid}")
+                        st.session_state.toast_msg = f"Deleted {uid}"
                         st.rerun()
                     else:
                         st.error(err)
@@ -150,7 +154,7 @@ with tab1:
                         if col_e.button("Delete", key=f"del_prog_{uid}_{pid}"):
                             success, err = delete_program(token, uid, pid)
                             if success:
-                                st.toast("Program deleted")
+                                st.session_state.toast_msg = "Program deleted"
                                 st.rerun()
                             else:
                                 st.error(err)
@@ -167,7 +171,8 @@ with tab1:
                                 st.error(f"Failed to update {p_name}: {err}")
                                 ok = False
                         if ok:
-                            st.success("All changes saved")
+                            st.session_state.toast_msg = "All changes saved"
+                            st.rerun()
 
 with tab2:
     if st.button("Refresh Users"):
