@@ -100,18 +100,24 @@ def edit_program_dialog(uni_id, pid, current_name, current_degree, current_score
 tab1, tab2 = st.tabs(["Universities & Programs", "Users List"])
 
 with tab1:
-    col1, col2 = st.columns([3, 1])
+    col1, col2, col3 = st.columns([2, 1, 1])
     col1.subheader("Universities & Programs")
-    if col2.button("Add University", width="stretch"):
+    uni_search = col2.text_input("Cari PTN", placeholder="Search by name...", label_visibility="collapsed")
+    if col3.button("Add University", width="stretch"):
         add_uni_dialog()
 
     unis = fetch_universities()
+    if uni_search:
+        q = uni_search.lower().strip()
+        unis = [u for u in unis if q in u.get("name", "").lower() or q in u.get("id", "").lower()]
+
     if not unis:
-        st.info("No universities found.")
+        st.info("No universities found." if not uni_search else f"No universities matching '{uni_search}'.")
     else:
+        st.caption(f"Showing {len(unis)} university/universities")
         for uni in unis:
             uid = uni["id"]
-            with st.expander(f"**{uni.get('name')}** ({uid})", expanded=True):
+            with st.expander(f"**{uni.get('name')}** ({uid})"):
                 head_col, btn_col1, btn_col2 = st.columns([6, 2, 2], vertical_alignment="center")
                 head_col.markdown(f"#### {uni.get('name')}")
                 if btn_col1.button("Edit Name", key=f"edit_{uid}", width="stretch"):
@@ -126,12 +132,20 @@ with tab1:
                 st.divider()
 
                 programs = fetch_programs(uid)
-                st.markdown("**Programs**")
+                prog_search = st.text_input(
+                    "Cari program", placeholder="Filter programs...",
+                    key=f"prog_search_{uid}", label_visibility="collapsed",
+                )
+                if prog_search:
+                    q = prog_search.lower().strip()
+                    programs = [p for p in programs if q in p.get("name", "").lower()]
+
+                st.markdown(f"**Programs** ({len(programs)})")
                 if st.button("Add Program", key=f"add_prog_{uid}", width="stretch"):
                     add_program_dialog(uid)
 
                 if not programs:
-                    st.info("No programs.")
+                    st.info("No programs." if not prog_search else f"No programs matching '{prog_search}'.")
                 else:
                     for prog in programs:
                         pid = prog.get("id") or prog.get("_id")
@@ -175,9 +189,13 @@ with tab1:
                             st.rerun()
 
 with tab2:
-    if st.button("Refresh Users"):
-        users = list_users(token)
-        if users is not None:
-            st.dataframe(users, width="stretch", hide_index=True)
-        else:
-            st.error("Failed to fetch users or insufficient permissions.")
+    users = list_users(token)
+    if users is None:
+        st.error("Failed to fetch users or insufficient permissions.")
+    else:
+        user_search = st.text_input("Cari user", placeholder="Search by username...", label_visibility="collapsed")
+        if user_search:
+            q = user_search.lower().strip()
+            users = [u for u in users if q in str(u.get("username", "")).lower()]
+        st.caption(f"Showing {len(users)} user(s)")
+        st.dataframe(users, width="stretch", hide_index=True)
