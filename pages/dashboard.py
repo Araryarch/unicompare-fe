@@ -82,7 +82,7 @@ def edit_programs_dialog(uni_id):
         )
         updated.append({"id": pid, "score": new_score, "score_text": str(new_score)})
 
-    if st.button("Save All Changes", type="primary", use_container_width=True):
+    if st.button("Save All Changes", type="primary", width="stretch"):
         success, err = update_programs(token, uni_id, updated)
         if success:
             st.success("Programs updated successfully!")
@@ -96,7 +96,7 @@ tab1, tab2 = st.tabs(["Universities & Programs", "Users List"])
 with tab1:
     col1, col2 = st.columns([3, 1])
     col1.subheader("Universities & Programs")
-    if col2.button("➕ Add University", use_container_width=True):
+    if col2.button("➕ Add University", width="stretch"):
         add_uni_dialog()
 
     unis = fetch_universities()
@@ -108,9 +108,9 @@ with tab1:
             with st.expander(f"**{uni.get('name')}** ({uid})", expanded=True):
                 head_col, btn_col1, btn_col2 = st.columns([6, 2, 2], vertical_alignment="center")
                 head_col.markdown(f"#### {uni.get('name')}")
-                if btn_col1.button("Edit Name", key=f"edit_{uid}", use_container_width=True):
+                if btn_col1.button("Edit Name", key=f"edit_{uid}", width="stretch"):
                     edit_uni_dialog(uid, uni["name"])
-                if btn_col2.button("Delete", key=f"del_{uid}", type="primary", use_container_width=True):
+                if btn_col2.button("Delete", key=f"del_{uid}", type="primary", width="stretch"):
                     success, err = delete_university(token, uid)
                     if success:
                         st.success(f"Deleted {uid}")
@@ -139,7 +139,7 @@ with tab1:
                         )
                         updated.append({"id": pid, "score": new_score, "score_text": str(new_score)})
 
-                    if st.button("Save Scores", key=f"save_{uid}", type="primary", use_container_width=True):
+                    if st.button("Save Scores", key=f"save_{uid}", type="primary", width="stretch"):
                         success, err = update_programs(token, uid, updated)
                         if success:
                             st.success("Scores saved!")
@@ -151,6 +151,6 @@ with tab2:
     if st.button("Refresh Users"):
         users = list_users(token)
         if users is not None:
-            st.dataframe(users, use_container_width=True, hide_index=True)
+            st.dataframe(users, width="stretch", hide_index=True)
         else:
             st.error("Failed to fetch users or insufficient permissions.")

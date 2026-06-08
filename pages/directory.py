@@ -19,7 +19,7 @@ with tab1:
     data = search_universities(search_q) if search_q else fetch_universities()
     total = data.get("total", len(data)) if isinstance(data, dict) else len(data)
     st.write(f"Showing **{total}** universities")
-    st.dataframe(format_universities(data), use_container_width=True, hide_index=True)
+    st.dataframe(format_universities(data), width="stretch", hide_index=True)
 
 with tab2:
     st.write("Find eligible programs across universities based on your target score.")

@@ -63,7 +63,7 @@ def render_comparison_ui(uni_names, uni_options, get_programs_fn):
     ptn2, prog2, map2 = _render_program_card(c2, 2, uni_names, uni_options, get_programs_fn)
 
     st.write("")
-    if st.button("Bandingkan Program", use_container_width=True, type="primary"):
+    if st.button("Bandingkan Program", width="stretch", type="primary"):
         if "Pilih" in ptn1 or "Pilih" in ptn2 or "Pilih" in prog1 or "Pilih" in prog2:
             st.warning("Silakan lengkapi pilihan PTN dan Program Studi untuk kedua pilihan.")
             return
@@ -98,4 +98,4 @@ def render_eligible_programs(universities: list[dict]):
             continue
         with st.expander(f"🏫 {uni_name} ({len(progs)} Programs)", expanded=True):
             from utils.format import format_eligible_programs
-            st.dataframe(format_eligible_programs(progs), use_container_width=True, hide_index=True)
+            st.dataframe(format_eligible_programs(progs), width="stretch", hide_index=True)
