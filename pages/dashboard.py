@@ -9,6 +9,8 @@ from services.universities import (
     update_university,
     delete_university,
     update_programs,
+    create_program,
+    delete_program,
     list_users,
 )
 
@@ -55,40 +57,22 @@ def edit_uni_dialog(uni_id, current_name):
                 st.error(err)
 
 
-@st.dialog("Edit Programs")
-def edit_programs_dialog(uni_id):
-    programs = fetch_programs(uni_id)
-    if not programs:
-        st.info("No programs found for this university.")
-        if st.button("Close"):
-            st.rerun()
-        return
-
-    st.write(f"Editing programs for **{uni_id}**")
-    updated = []
-    for prog in programs:
-        pid = prog.get("id") or prog.get("_id")
-        name = prog.get("name", "-")
-        degree = prog.get("degree", "-")
-        score = prog.get("score", 0)
-        score_text = prog.get("score_text", str(score))
-
-        col1, col2 = st.columns([3, 1], vertical_alignment="center")
-        col1.markdown(f"**{name}** ({degree})")
-        new_score = col2.number_input(
-            "Score", value=float(score), step=0.1,
-            key=f"prog_score_{uni_id}_{pid}",
-            label_visibility="collapsed",
-        )
-        updated.append({"id": pid, "score": new_score, "score_text": str(new_score)})
-
-    if st.button("Save All Changes", type="primary", width="stretch"):
-        success, err = update_programs(token, uni_id, updated)
-        if success:
-            st.success("Programs updated successfully!")
-            st.rerun()
-        else:
-            st.error(err)
+@st.dialog("Add Program")
+def add_program_dialog(uni_id):
+    with st.form(f"add_prog_{uni_id}"):
+        name = st.text_input("Program Name")
+        degree = st.text_input("Degree (e.g. S1, S2)")
+        score = st.number_input("Score", min_value=0.0, max_value=1000.0, step=0.1)
+        if st.form_submit_button("Submit", type="primary"):
+            if not name or not degree:
+                st.error("Name and Degree are required.")
+            else:
+                success, err = create_program(token, uni_id, name, score, degree)
+                if success:
+                    st.success("Program added!")
+                    st.rerun()
+                else:
+                    st.error(err)
 
 
 tab1, tab2 = st.tabs(["Universities & Programs", "Users List"])
@@ -96,7 +80,7 @@ tab1, tab2 = st.tabs(["Universities & Programs", "Users List"])
 with tab1:
     col1, col2 = st.columns([3, 1])
     col1.subheader("Universities & Programs")
-    if col2.button("➕ Add University", width="stretch"):
+    if col2.button("Add University", width="stretch"):
         add_uni_dialog()
 
     unis = fetch_universities()
@@ -120,10 +104,13 @@ with tab1:
                 st.divider()
 
                 programs = fetch_programs(uid)
+                st.markdown("**Programs**")
+                if st.button("Add Program", key=f"add_prog_{uid}", width="stretch"):
+                    add_program_dialog(uid)
+
                 if not programs:
                     st.info("No programs.")
                 else:
-                    st.markdown("**Programs**")
                     updated = []
                     for prog in programs:
                         pid = prog.get("id") or prog.get("_id")
@@ -131,13 +118,20 @@ with tab1:
                         degree = prog.get("degree", "-")
                         cur_score = float(prog.get("score", 0))
 
-                        col_a, col_b = st.columns([4, 1], vertical_alignment="center")
+                        col_a, col_b, col_c = st.columns([3, 1, 1], vertical_alignment="center")
                         col_a.markdown(f"{name}  _{degree}_")
                         new_score = col_b.number_input(
                             "Score", value=cur_score, step=0.1,
                             key=f"score_{uid}_{pid}", label_visibility="collapsed",
                         )
                         updated.append({"id": pid, "score": new_score, "score_text": str(new_score)})
+                        if col_c.button("Delete", key=f"del_prog_{uid}_{pid}"):
+                            success, err = delete_program(token, uid, pid)
+                            if success:
+                                st.success("Program deleted!")
+                                st.rerun()
+                            else:
+                                st.error(err)
 
                     if st.button("Save Scores", key=f"save_{uid}", type="primary", width="stretch"):
                         success, err = update_programs(token, uid, updated)

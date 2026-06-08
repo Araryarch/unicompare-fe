@@ -96,6 +96,6 @@ def render_eligible_programs(universities: list[dict]):
         progs = uni.get("eligible_programs", [])
         if not progs:
             continue
-        with st.expander(f"🏫 {uni_name} ({len(progs)} Programs)", expanded=True):
+        with st.expander(f"{uni_name} ({len(progs)} Programs)", expanded=True):
             from utils.format import format_eligible_programs
             st.dataframe(format_eligible_programs(progs), width="stretch", hide_index=True)
