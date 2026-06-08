@@ -1,5 +1,7 @@
 import streamlit as st
 
+from services.auth import get_profile
+
 from services.universities import (
     fetch_universities,
     fetch_programs,
@@ -15,6 +17,11 @@ st.title("Admin Dashboard")
 token = st.session_state.get("token")
 if not token:
     st.warning("Please log in as an administrator to access the dashboard.")
+    st.stop()
+
+user_data = get_profile(token)
+if not user_data or user_data.get("role") != "admin":
+    st.error("Access Denied: You must be an administrator to view this page.")
     st.stop()
 
 
@@ -66,7 +73,7 @@ def edit_programs_dialog(uni_id):
         score = prog.get("score", 0)
         score_text = prog.get("score_text", str(score))
 
-        col1, col2 = st.columns([3, 1])
+        col1, col2 = st.columns([3, 1], vertical_alignment="center")
         col1.markdown(f"**{name}** ({degree})")
         new_score = col2.number_input(
             "Score", value=float(score), step=0.1,
@@ -122,7 +129,7 @@ with tab1:
                         degree = prog.get("degree", "-")
                         cur_score = float(prog.get("score", 0))
 
-                        col_a, col_b, col_c = st.columns([3, 1, 1])
+                        col_a, col_b = st.columns([4, 1], vertical_alignment="center")
                         col_a.markdown(f"{name}  _{degree}_")
                         new_score = col_b.number_input(
                             "Score", value=cur_score, step=0.1,

@@ -36,7 +36,7 @@ def _render_program_card(
     )
 
     with slot.container(border=True):
-        ptn_name = slot.selectbox(
+        ptn_name = st.selectbox(
             "Perguruan Tinggi Negeri",
             options=uni_names,
             key=style["selectbox_key"],
@@ -47,7 +47,7 @@ def _render_program_card(
             progs = get_programs_fn(uni_options[ptn_name])
             prog_map = {p["name"]: p for p in progs}
             prog_options += list(prog_map.keys())
-        prog_name = slot.selectbox(
+        prog_name = st.selectbox(
             "Program Studi",
             options=prog_options,
             key=style["prog_key"],
@@ -60,7 +60,6 @@ def render_comparison_ui(uni_names, uni_options, get_programs_fn):
     c1, c2 = st.columns(2)
 
     ptn1, prog1, map1 = _render_program_card(c1, 1, uni_names, uni_options, get_programs_fn)
-    c2.write("")
     ptn2, prog2, map2 = _render_program_card(c2, 2, uni_names, uni_options, get_programs_fn)
 
     st.write("")
