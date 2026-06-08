@@ -10,6 +10,17 @@ def fetch_universities():
     return []
 
 
+def get_universities():
+    if "universities" not in st.session_state:
+        st.session_state.universities = fetch_universities()
+    return st.session_state.universities
+
+
+def refresh_universities():
+    st.session_state.universities = fetch_universities()
+    return st.session_state.universities
+
+
 @st.cache_data
 def search_universities(query: str):
     res = api_get("/universities/search", params={"q": query})
@@ -25,6 +36,15 @@ def fetch_programs(uni_id: str):
     if res.status_code == 200:
         return res.json().get("programs", [])
     return []
+
+
+def get_programs(uni_id: str):
+    if not uni_id:
+        return []
+    key = f"programs_{uni_id}"
+    if key not in st.session_state:
+        st.session_state[key] = fetch_programs(uni_id)
+    return st.session_state[key]
 
 
 def compare_by_score(score: float):

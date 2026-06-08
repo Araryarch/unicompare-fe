@@ -1,9 +1,9 @@
 import streamlit as st
 
 from services.universities import (
-    fetch_universities,
+    get_universities,
     search_universities,
-    fetch_programs,
+    get_programs,
     compare_by_score,
 )
 from utils.format import format_universities
@@ -16,7 +16,7 @@ tab1, tab2, tab3 = st.tabs(["Browse", "Find by Score", "Compare Programs"])
 
 with tab1:
     search_q = st.text_input("Search university name...", placeholder="e.g., Universitas Indonesia")
-    data = search_universities(search_q) if search_q else fetch_universities()
+    data = search_universities(search_q) if search_q else get_universities()
     total = data.get("total", len(data)) if isinstance(data, dict) else len(data)
     st.write(f"Showing **{total}** universities")
     st.dataframe(format_universities(data), width="stretch", hide_index=True)
@@ -33,7 +33,7 @@ with tab2:
             render_eligible_programs(unis)
 
 with tab3:
-    unis = fetch_universities()
+    unis = get_universities()
     uni_options = {u["name"]: u["id"] for u in unis}
     uni_names = ["Pilih PTN"] + list(uni_options.keys())
-    render_comparison_ui(uni_names, uni_options, fetch_programs)
+    render_comparison_ui(uni_names, uni_options, get_programs)
