@@ -167,8 +167,7 @@ with tab1:
                                 st.error(f"Failed to update {p_name}: {err}")
                                 ok = False
                         if ok:
-                            st.toast("All changes saved")
-                            st.rerun()
+                            st.success("All changes saved")
 
 with tab2:
     if st.button("Refresh Users"):
