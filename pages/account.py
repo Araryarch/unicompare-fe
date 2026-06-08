@@ -14,9 +14,11 @@ if st.session_state.get("token"):
     else:
         st.error("Session expired. Please log in again.")
         st.session_state.token = None
+        st.query_params.clear()
 
     if st.button("Logout"):
         st.session_state.token = None
+        st.query_params.clear()
         st.rerun()
 else:
     tab1, tab2 = st.tabs(["Login", "Register"])
@@ -29,6 +31,7 @@ else:
                 token = login(l_username, l_password)
                 if token:
                     st.session_state.token = token
+                    st.query_params["token"] = token
                     st.session_state.toast_msg = "Login successful! 🎉"
                     st.rerun()
                 else:

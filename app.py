@@ -3,7 +3,7 @@ import streamlit as st
 st.set_page_config(page_title="Unicompare")
 
 if "token" not in st.session_state:
-    st.session_state.token = None
+    st.session_state.token = st.query_params.get("token") or None
 
 if "toast_msg" in st.session_state:
     st.toast(st.session_state.toast_msg)
