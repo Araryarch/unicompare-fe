@@ -97,6 +97,10 @@ def edit_program_dialog(uni_id, pid, current_name, current_degree, current_score
                 success, err = update_program(token, uni_id, pid, name, score, degree)
                 if success:
                     st.session_state.toast_msg = "Program updated"
+                    if f"deg_{uni_id}_{pid}" in st.session_state:
+                        del st.session_state[f"deg_{uni_id}_{pid}"]
+                    if f"score_{uni_id}_{pid}" in st.session_state:
+                        del st.session_state[f"score_{uni_id}_{pid}"]
                     st.rerun()
                 else:
                     st.error(err)
@@ -186,7 +190,12 @@ with tab1:
                             p_deg = st.session_state.get(f"deg_{uid}_{pid}", prog.get("degree", "-"))
                             p_score = st.session_state.get(f"score_{uid}_{pid}", float(prog.get("score", 0)))
                             s, err = update_program(token, uid, pid, p_name, float(p_score), p_deg)
-                            if not s:
+                            if s:
+                                if f"deg_{uid}_{pid}" in st.session_state:
+                                    del st.session_state[f"deg_{uid}_{pid}"]
+                                if f"score_{uid}_{pid}" in st.session_state:
+                                    del st.session_state[f"score_{uid}_{pid}"]
+                            else:
                                 st.error(f"Failed to update {p_name}: {err}")
                                 ok = False
                         if ok:
