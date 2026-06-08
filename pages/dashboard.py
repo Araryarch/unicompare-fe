@@ -106,16 +106,18 @@ with tab1:
         for uni in unis:
             uid = uni["id"]
             with st.expander(f"**{uni.get('name')}** ({uid})", expanded=True):
-                ac1, ac2, ac3 = st.columns([1, 1, 1])
-                if ac1.button("Edit Name", key=f"edit_{uid}"):
+                head_col, btn_col1, btn_col2 = st.columns([6, 2, 2], vertical_alignment="center")
+                head_col.markdown(f"#### {uni.get('name')}")
+                if btn_col1.button("Edit Name", key=f"edit_{uid}", use_container_width=True):
                     edit_uni_dialog(uid, uni["name"])
-                if ac2.button("Delete", key=f"del_{uid}", type="primary"):
+                if btn_col2.button("Delete", key=f"del_{uid}", type="primary", use_container_width=True):
                     success, err = delete_university(token, uid)
                     if success:
                         st.success(f"Deleted {uid}")
                         st.rerun()
                     else:
                         st.error(err)
+                st.divider()
 
                 programs = fetch_programs(uid)
                 if not programs:
