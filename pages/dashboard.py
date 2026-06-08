@@ -2,9 +2,11 @@ import streamlit as st
 
 from services.universities import (
     fetch_universities,
+    fetch_programs,
     create_university,
     update_university,
     delete_university,
+    update_programs,
     list_users,
 )
 
@@ -46,44 +48,100 @@ def edit_uni_dialog(uni_id, current_name):
                 st.error(err)
 
 
-tab1, tab2 = st.tabs(["Manage Universities", "Users List"])
+@st.dialog("Edit Programs")
+def edit_programs_dialog(uni_id):
+    programs = fetch_programs(uni_id)
+    if not programs:
+        st.info("No programs found for this university.")
+        if st.button("Close"):
+            st.rerun()
+        return
+
+    st.write(f"Editing programs for **{uni_id}**")
+    updated = []
+    for prog in programs:
+        pid = prog.get("id") or prog.get("_id")
+        name = prog.get("name", "-")
+        degree = prog.get("degree", "-")
+        score = prog.get("score", 0)
+        score_text = prog.get("score_text", str(score))
+
+        col1, col2 = st.columns([3, 1])
+        col1.markdown(f"**{name}** ({degree})")
+        new_score = col2.number_input(
+            "Score", value=float(score), step=0.1,
+            key=f"prog_score_{uni_id}_{pid}",
+            label_visibility="collapsed",
+        )
+        updated.append({"id": pid, "score": new_score, "score_text": str(new_score)})
+
+    if st.button("Save All Changes", type="primary", use_container_width=True):
+        success, err = update_programs(token, uni_id, updated)
+        if success:
+            st.success("Programs updated successfully!")
+            st.rerun()
+        else:
+            st.error(err)
+
+
+tab1, tab2 = st.tabs(["Universities & Programs", "Users List"])
 
 with tab1:
     col1, col2 = st.columns([3, 1])
-    col1.subheader("Universities List")
+    col1.subheader("Universities & Programs")
     if col2.button("➕ Add University", use_container_width=True):
         add_uni_dialog()
 
     unis = fetch_universities()
-    if unis:
-        h1, h2, h3, h4 = st.columns([2, 4, 1, 1])
-        h1.markdown("**ID**")
-        h2.markdown("**Name**")
-        h3.markdown("**Edit**")
-        h4.markdown("**Delete**")
-        st.divider()
-
-        for uni in unis:
-            c1, c2, c3, c4 = st.columns([2, 4, 1, 1])
-            c1.write(uni.get("id"))
-            c2.write(uni.get("name"))
-            if c3.button("Edit", key=f"edit_{uni['id']}"):
-                edit_uni_dialog(uni["id"], uni["name"])
-            if c4.button("Delete", key=f"del_{uni['id']}", type="primary"):
-                success, err = delete_university(token, uni["id"])
-                if success:
-                    st.success(f"Deleted {uni['id']}")
-                    st.rerun()
-                else:
-                    st.error(err)
-            st.divider()
-    else:
+    if not unis:
         st.info("No universities found.")
+    else:
+        for uni in unis:
+            uid = uni["id"]
+            with st.expander(f"**{uni.get('name')}** ({uid})", expanded=True):
+                ac1, ac2, ac3 = st.columns([1, 1, 1])
+                if ac1.button("Edit Name", key=f"edit_{uid}"):
+                    edit_uni_dialog(uid, uni["name"])
+                if ac2.button("Delete", key=f"del_{uid}", type="primary"):
+                    success, err = delete_university(token, uid)
+                    if success:
+                        st.success(f"Deleted {uid}")
+                        st.rerun()
+                    else:
+                        st.error(err)
+
+                programs = fetch_programs(uid)
+                if not programs:
+                    st.info("No programs.")
+                else:
+                    st.markdown("**Programs**")
+                    updated = []
+                    for prog in programs:
+                        pid = prog.get("id") or prog.get("_id")
+                        name = prog.get("name", "-")
+                        degree = prog.get("degree", "-")
+                        cur_score = float(prog.get("score", 0))
+
+                        col_a, col_b, col_c = st.columns([3, 1, 1])
+                        col_a.markdown(f"{name}  _{degree}_")
+                        new_score = col_b.number_input(
+                            "Score", value=cur_score, step=0.1,
+                            key=f"score_{uid}_{pid}", label_visibility="collapsed",
+                        )
+                        updated.append({"id": pid, "score": new_score, "score_text": str(new_score)})
+
+                    if st.button("Save Scores", key=f"save_{uid}", type="primary", use_container_width=True):
+                        success, err = update_programs(token, uid, updated)
+                        if success:
+                            st.success("Scores saved!")
+                            st.rerun()
+                        else:
+                            st.error(err)
 
 with tab2:
     if st.button("Refresh Users"):
         users = list_users(token)
         if users is not None:
-            st.table(users)
+            st.dataframe(users, use_container_width=True, hide_index=True)
         else:
             st.error("Failed to fetch users or insufficient permissions.")

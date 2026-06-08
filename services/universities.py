@@ -18,7 +18,6 @@ def search_universities(query: str):
     return []
 
 
-@st.cache_data
 def fetch_programs(uni_id: str):
     if not uni_id:
         return []
@@ -52,6 +51,12 @@ def update_university(token: Optional[str], uni_id: str, name: Optional[str]):
 
 def delete_university(token: Optional[str], uni_id: str):
     res = api_delete(f"/admin/universities/{uni_id}", token=token)
+    return res.status_code == 200, res.text if res.status_code != 200 else None
+
+
+def update_programs(token: Optional[str], uni_id: str, programs: list[dict]):
+    res = api_put(f"/admin/universities/{uni_id}/programs", token=token,
+                  json={"programs": programs})
     return res.status_code == 200, res.text if res.status_code != 200 else None
 
 

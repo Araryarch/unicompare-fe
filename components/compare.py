@@ -99,4 +99,4 @@ def render_eligible_programs(universities: list[dict]):
             continue
         with st.expander(f"🏫 {uni_name} ({len(progs)} Programs)", expanded=True):
             from utils.format import format_eligible_programs
-            st.table(format_eligible_programs(progs))
+            st.dataframe(format_eligible_programs(progs), use_container_width=True, hide_index=True)
